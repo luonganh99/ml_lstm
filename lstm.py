@@ -8,11 +8,11 @@ from keras.models import Sequential  # Deeplearing API
 from keras.layers import LSTM, Dropout, Dense
 
 
-def train():
+def train(comp, numOfTrain):
     scaler = MinMaxScaler(feature_range=(0, 1))
 
     df = pd.read_csv("stock_data.csv")
-    df = df.loc[df["Stock"] == "AAPL"]
+    df = df.loc[df["Stock"] == comp]
 
     df["Date"] = pd.to_datetime(df.Date, format="%m/%d/%Y")
     df.index = df["Date"]  # Set index dataframe = date
@@ -37,8 +37,8 @@ def train():
 
     final_dataset = new_dataset.values  # [[0],[1]]
 
-    train_data = final_dataset[0:6690, :]
-    valid_data = final_dataset[6690:, :]
+    train_data = final_dataset[0:numOfTrain, :]
+    valid_data = final_dataset[numOfTrain:, :]
 
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled_data = scaler.fit_transform(final_dataset)
@@ -78,15 +78,13 @@ def train():
     closing_price = lstm_model.predict(X_test)
     closing_price = scaler.inverse_transform(closing_price)
 
-    lstm_model.save("apple_lstm_model.h5")
-
-    train_data = new_dataset[:6690]
-    valid_data = new_dataset[6690:]
+    train_data = new_dataset[:numOfTrain]
+    valid_data = new_dataset[numOfTrain:]
     valid_data["Predictions"] = closing_price
 
     # Price Rate of Change
-    train_roc_dataset = roc_dataset[:6690]
-    valid_roc_dataset = roc_dataset[6689 : len(roc_dataset) - 1]
+    train_roc_dataset = roc_dataset[:numOfTrain]
+    valid_roc_dataset = roc_dataset[numOfTrain - 1 : len(roc_dataset) - 1]
     rateOfChanges = []
     for i in range(0, len(closing_price)):
         rateOfChanges.append(
